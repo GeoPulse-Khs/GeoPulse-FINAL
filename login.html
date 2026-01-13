@@ -78,9 +78,6 @@
       margin-top: 10px;
     }
   </style>
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js"></script>
   <!-- Google Identity Services -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -106,7 +103,12 @@
     <button class="logout-btn" onclick="logout()">Logout</button>
   </div>
 
-  <script>
+  <!-- Firebase v9 Modular SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } 
+      from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+
     // ✅ Your Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyAr3OXd-A18RfsFuVQrcr4QsZ1wPJI6JMw",
@@ -119,48 +121,56 @@
       measurementId: "G-Z2KZ8RR6YK"
     };
 
-    // Initialize Firebase
-    const app = firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
 
     // Email/Password Login
-    function handleLogin() {
+    window.handleLogin = () => {
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
-      auth.signInWithEmailAndPassword(email, password)
+      signInWithEmailAndPassword(auth, email, password)
         .then(userCredential => {
-          const user = userCredential.user;
-          localStorage.setItem("userEmail", user.email);
+          localStorage.setItem("userEmail", userCredential.user.email);
           localStorage.setItem("loginMethod", "email");
           window.location.href = "geopulse.html";
         })
         .catch(error => {
           alert("Login failed: " + error.message);
         });
-    }
+    };
 
     // Email/Password Signup
-    function handleSignup() {
+    window.handleSignup = () => {
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
-      auth.createUserWithEmailAndPassword(email, password)
-        .then(userCredential => {
+      createUserWithEmailAndPassword(auth, email, password)
+        .then(() => {
           alert("Account created! You can now log in.");
         })
         .catch(error => {
           alert("Signup failed: " + error.message);
         });
-    }
+    };
+
+    // Logout
+    window.logout = () => {
+      signOut(auth).then(() => {
+        localStorage.clear();
+        document.getElementById("welcomeMsg").innerText = "";
+        document.getElementById("profilePic").style.display = "none";
+        alert("Logged out successfully!");
+      });
+    };
 
     // Google login callback
-    function handleCredentialResponse(response) {
+    window.handleCredentialResponse = (response) => {
       const data = JSON.parse(atob(response.credential.split(".")[1]));
       localStorage.setItem("userEmail", data.email);
       localStorage.setItem("userName", data.name);
       localStorage.setItem("userPicture", data.picture);
       localStorage.setItem("loginMethod", "google");
       window.location.href = "geopulse.html";
-    }
+    };
 
     // Initialize Google Sign-In
     window.onload = () => {
@@ -173,16 +183,6 @@
         { theme: "outline", size: "large", width: "100%" }
       );
     };
-
-    // Logout
-    function logout() {
-      auth.signOut().then(() => {
-        localStorage.clear();
-        document.getElementById("welcomeMsg").innerText = "";
-        document.getElementById("profilePic").style.display = "none";
-        alert("Logged out successfully!");
-      });
-    }
   </script>
 </body>
 </html>
