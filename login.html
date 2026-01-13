@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoPulse Login</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .login-card {
+            background-color: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            width: 350px;
+            text-align: center;
+        }
+
+        .login-card h2 {
+            color: #0d6efd;
+            margin-bottom: 20px;
+        }
+
+        .login-card input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+
+        .login-card button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 15px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .login-btn {
+            background-color: #0d6efd;
+            color: white;
+        }
+
+        .google-btn {
+            background-color: #fff;
+            color: #444;
+            border: 1px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .google-btn img {
+            width: 20px;
+            margin-right: 10px;
+        }
+
+        .divider {
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            text-align: center;
+        }
+
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .divider:not(:empty)::before {
+            margin-right: .5em;
+        }
+
+        .divider:not(:empty)::after {
+            margin-left: .5em;
+        }
+
+        #welcomeMsg {
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: #0d6efd;
+        }
+
+        #profilePic {
+            border-radius: 50%;
+            margin-bottom: 10px;
+        }
+
+        .logout-btn {
+            background-color: #dc3545;
+            color: white;
+            margin-top: 10px;
+        }
+    </style>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+
+    <div class="login-card">
+        <h2>GeoPulse Login</h2>
+
+        <!-- Show logged-in info if exists -->
+        <p id="welcomeMsg"></p>
+        <img id="profilePic" width="80" style="display:none">
+
+        <!-- Standard Login -->
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Password">
+        <button class="login-btn" onclick="handleLogin()">Login</button>
+
+        <div class="divider">or</div>
+
+        <!-- Google Sign-In Button -->
+        <div class="g_id_signin google-btn" data-type="standard"></div>
+
+        <!-- Logout button -->
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+
+    <script>
+        // Check if user is already logged in
+        const emailStored = localStorage.getItem("userEmail");
+        const nameStored = localStorage.getItem("userName");
+        const pictureStored = localStorage.getItem("userPicture");
+
+        if (emailStored) {
+            document.getElementById("welcomeMsg").innerText = 
+                "Logged in as: " + (nameStored || emailStored);
+            if (pictureStored) {
+                const img = document.getElementById("profilePic");
+                img.src = pictureStored;
+                img.style.display = "block";
+            }
+        }
+
+        // Standard login
+        function handleLogin() {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            if (!email || !password) {
+                alert("Please fill in both fields");
+                return;
+            }
+
+            localStorage.setItem("userEmail", email);
+            localStorage.setItem("loginMethod", "email");
+            localStorage.setItem("userPassword", password); // For demo only
+
+            // Redirect to geopulse.html
+            window.location.href = "geopulse.html";
+        }
+
+        // Google login
+        function handleCredentialResponse(response) {
+            const data = JSON.parse(atob(response.credential.split(".")[1]));
+
+            localStorage.setItem("userEmail", data.email);
+            localStorage.setItem("userName", data.name);
+            localStorage.setItem("userPicture", data.picture);
+            localStorage.setItem("loginMethod", "google");
+
+            window.location.href = "geopulse.html";
+        }
+
+        // Initialize Google button
+        window.onload = () => {
+            google.accounts.id.initialize({
+                client_id: "YOUR_GOOGLE_CLIENT_ID",
+                callback: handleCredentialResponse
+            });
+
+            google.accounts.id.renderButton(
+                document.querySelector(".g_id_signin"),
+                { theme: "outline", size: "large", width: "100%" }
+            );
+        };
+
+        // Logout
+        function logout() {
+            localStorage.removeItem("userEmail");
+            localStorage.removeItem("userName");
+            localStorage.removeItem("userPicture");
+            localStorage.removeItem("userPassword");
+            localStorage.removeItem("loginMethod");
+
+            document.getElementById("welcomeMsg").innerText = "";
+            document.getElementById("profilePic").style.display = "none";
+            alert("Logged out successfully!");
+        }
+    </script>
+</body>
+</html>

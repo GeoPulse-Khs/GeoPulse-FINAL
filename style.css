@@ -1,0 +1,117 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+/* NAVBAR */
+.navbar {
+  background: #f5f7fa;
+  padding: 15px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar a {
+  margin-left: 20px;
+  text-decoration: none;
+  color: #333;
+  font-weight: 500;
+}
+
+.logo {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+/* HERO */
+.hero {
+  background: linear-gradient(
+      rgba(0,0,0,0.5),
+      rgba(0,0,0,0.5)
+    ),
+    url("https://images.unsplash.com/photo-1527430253228-e93688616381");
+  background-size: cover;
+  background-position: center;
+  height: 70vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.hero-content {
+  color: white;
+  text-align: center;
+  max-width: 600px;
+}
+
+.hero-content h1 {
+  font-size: 48px;
+  margin-bottom: 15px;
+}
+
+.hero-content p {
+  font-size: 16px;
+  margin-bottom: 25px;
+}
+
+.hero-content button {
+  padding: 12px 30px;
+  border: none;
+  background: #4e8cff;
+  color: white;
+  font-size: 14px;
+  border-radius: 25px;
+  cursor: pointer;
+}
+
+/* WELCOME */
+.welcome {
+  padding: 60px 20px;
+  text-align: center;
+  background: #ffffff;
+}
+
+.welcome h2 {
+  margin-bottom: 15px;
+}
+
+.welcome p {
+  max-width: 600px;
+  margin: auto;
+  color: #666;
+}
+
+.secondary-btn {
+  margin-top: 20px;
+  padding: 10px 25px;
+  border: 1px solid #4e8cff;
+  background: transparent;
+  color: #4e8cff;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+/* THREE BOX SECTION */
+.triple-box {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.box {
+  flex: 1;
+  padding: 40px;
+  text-align: center;
+  background: #4e8cff;
+  color: white;
+}
+
+.box.dark {
+  background: #1e1e1e;
+}
+
+.box h3 {
+  margin-bottom: 10px;
+}
