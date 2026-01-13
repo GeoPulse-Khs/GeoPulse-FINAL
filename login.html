@@ -78,7 +78,10 @@
       margin-top: 10px;
     }
   </style>
-  <!-- Correct Google Identity Services script -->
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js"></script>
+  <!-- Google Identity Services -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
@@ -88,10 +91,11 @@
     <p id="welcomeMsg"></p>
     <img id="profilePic" width="80" style="display:none">
 
-    <!-- Standard Login -->
+    <!-- Email/Password Login -->
     <input type="email" id="email" placeholder="Email">
     <input type="password" id="password" placeholder="Password">
     <button class="login-btn" onclick="handleLogin()">Login</button>
+    <button class="login-btn" onclick="handleSignup()">Sign Up</button>
 
     <div class="divider">or</div>
 
@@ -103,34 +107,49 @@
   </div>
 
   <script>
-    // Restore session if available
-    const emailStored = localStorage.getItem("userEmail");
-    const nameStored = localStorage.getItem("userName");
-    const pictureStored = localStorage.getItem("userPicture");
+    // ✅ Your Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAr3OXd-A18RfsFuVQrcr4QsZ1wPJI6JMw",
+      authDomain: "password-and-email-cca57.firebaseapp.com",
+      databaseURL: "https://password-and-email-cca57-default-rtdb.firebaseio.com",
+      projectId: "password-and-email-cca57",
+      storageBucket: "password-and-email-cca57.firebasestorage.app",
+      messagingSenderId: "415977895488",
+      appId: "1:415977895488:web:b4d07029cd8ecd971311a5",
+      measurementId: "G-Z2KZ8RR6YK"
+    };
 
-    if (emailStored) {
-      document.getElementById("welcomeMsg").innerText =
-        "Logged in as: " + (nameStored || emailStored);
-      if (pictureStored) {
-        const img = document.getElementById("profilePic");
-        img.src = pictureStored;
-        img.style.display = "block";
-      }
-    }
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
 
-    // Standard login
+    // Email/Password Login
     function handleLogin() {
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
-      if (!email || !password) {
-        alert("Please fill in both fields");
-        return;
-      }
-      localStorage.setItem("userEmail", email);
-      localStorage.setItem("loginMethod", "email");
-      // ⚠️ Never store passwords in localStorage in production
-      localStorage.setItem("userPassword", password);
-      window.location.href = "geopulse.html";
+      auth.signInWithEmailAndPassword(email, password)
+        .then(userCredential => {
+          const user = userCredential.user;
+          localStorage.setItem("userEmail", user.email);
+          localStorage.setItem("loginMethod", "email");
+          window.location.href = "geopulse.html";
+        })
+        .catch(error => {
+          alert("Login failed: " + error.message);
+        });
+    }
+
+    // Email/Password Signup
+    function handleSignup() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      auth.createUserWithEmailAndPassword(email, password)
+        .then(userCredential => {
+          alert("Account created! You can now log in.");
+        })
+        .catch(error => {
+          alert("Signup failed: " + error.message);
+        });
     }
 
     // Google login callback
@@ -157,10 +176,12 @@
 
     // Logout
     function logout() {
-      localStorage.clear();
-      document.getElementById("welcomeMsg").innerText = "";
-      document.getElementById("profilePic").style.display = "none";
-      alert("Logged out successfully!");
+      auth.signOut().then(() => {
+        localStorage.clear();
+        document.getElementById("welcomeMsg").innerText = "";
+        document.getElementById("profilePic").style.display = "none";
+        alert("Logged out successfully!");
+      });
     }
   </script>
 </body>
