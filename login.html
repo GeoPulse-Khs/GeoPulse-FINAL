@@ -59,6 +59,7 @@
     #profilePic { border-radius: 50%; margin-bottom: 10px; }
     .logout-btn { background-color: #dc3545; color: white; margin-top: 10px; }
   </style>
+
   <!-- Google Identity Services -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -90,7 +91,7 @@
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut }
       from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
 
-    // Your Firebase config
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyAr3OXd-A18RfsFuVQrcr4QsZ1wPJI6JMw",
       authDomain: "password-and-email-cca57.firebaseapp.com",
@@ -105,43 +106,30 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    // Attach handlers to window so inline onclick works
+    // Email/Password login
     window.handleLogin = () => {
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
-      if (!email || !password) {
-        alert("Please enter email and password.");
-        return;
-      }
+      if (!email || !password) { alert("Please enter email and password."); return; }
+
       signInWithEmailAndPassword(auth, email, password)
         .then(userCredential => {
           const user = userCredential.user;
           localStorage.setItem("userEmail", user.email);
           localStorage.setItem("loginMethod", "email");
-          console.log("Logged in:", user.email);
           window.location.href = "geopulse.html";
         })
-        .catch(error => {
-          console.error("Login failed:", error);
-          alert("Login failed: " + error.message);
-        });
+        .catch(error => alert("Login failed: " + error.message));
     };
 
     window.handleSignup = () => {
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
-      if (!email || !password) {
-        alert("Please enter email and password.");
-        return;
-      }
+      if (!email || !password) { alert("Please enter email and password."); return; }
+
       createUserWithEmailAndPassword(auth, email, password)
-        .then(() => {
-          alert("Account created! You can now log in.");
-        })
-        .catch(error => {
-          console.error("Signup failed:", error);
-          alert("Signup failed: " + error.message);
-        });
+        .then(() => alert("Account created! You can now log in."))
+        .catch(error => alert("Signup failed: " + error.message));
     };
 
     window.logout = () => {
@@ -152,10 +140,7 @@
           document.getElementById("profilePic").style.display = "none";
           alert("Logged out successfully!");
         })
-        .catch(err => {
-          console.error("Logout error:", err);
-          alert("Logout failed: " + err.message);
-        });
+        .catch(err => alert("Logout failed: " + err.message));
     };
 
     // Google login callback
@@ -166,21 +151,16 @@
         localStorage.setItem("userName", data.name);
         localStorage.setItem("userPicture", data.picture);
         localStorage.setItem("loginMethod", "google");
-        console.log("Google user:", data.email);
         window.location.href = "geopulse.html";
-      } catch (e) {
-        console.error("Failed to parse Google credential:", e);
-        alert("Google Sign-In failed.");
-      }
+      } catch (e) { alert("Google Sign-In failed."); }
     };
 
-    // Wait for DOM, then render Google button when library is ready
+    // Render Google button
     document.addEventListener("DOMContentLoaded", () => {
       const tryRenderGoogle = () => {
         if (window.google && google.accounts && google.accounts.id) {
-          console.log("Google Identity Services loaded, rendering button...");
           google.accounts.id.initialize({
-            client_id: "964242814700-pdn06vr1q7de63nrnh46g6bpmlv78ck1.apps.googleusercontent.com",
+            client_id: "922030653595-o1rv3g85jlhv5e6mm05i9aq72gltf72m.apps.googleusercontent.com",
             callback: handleCredentialResponse
           });
           google.accounts.id.renderButton(
@@ -188,7 +168,6 @@
             { theme: "outline", size: "large", width: "100%" }
           );
         } else {
-          // Retry until the async script is ready
           setTimeout(tryRenderGoogle, 200);
         }
       };
