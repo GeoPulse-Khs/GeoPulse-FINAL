@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>GeoPulse Login</title>
+
   <style>
     body {
       margin: 0;
@@ -67,6 +68,7 @@
   <!-- Google Identity Services -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
+
 <body>
   <div class="login-card">
     <h2>GeoPulse Login</h2>
@@ -82,21 +84,19 @@
 
     <div class="divider">or</div>
 
-    <!-- Google Sign-In Button Centered -->
+    <!-- Google Sign-In -->
     <div class="google-btn-container">
       <div id="googleBtn"></div>
     </div>
 
-    <!-- Logout button -->
     <button class="logout-btn" onclick="logout()">Logout</button>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } 
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut }
       from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
 
-    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyAr3OXd-A18RfsFuVQrcr4QsZ1wPJI6JMw",
       authDomain: "password-and-email-cca57.firebaseapp.com",
@@ -111,81 +111,52 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    // DOM elements
     const emailInput = document.getElementById("email");
     const passwordInput = document.getElementById("password");
-    const loginBtn = document.getElementById("loginBtn");
-    const signupBtn = document.getElementById("signupBtn");
 
-    // LOGIN BUTTON
-    loginBtn.addEventListener("click", async () => {
-      const email = emailInput.value.trim();
-      const password = passwordInput.value;
-      if (!email || !password) return alert("Please enter email and password.");
-
+    document.getElementById("loginBtn").addEventListener("click", async () => {
       try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-        localStorage.setItem("userEmail", user.email);
+        const user = await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+        localStorage.setItem("userEmail", user.user.email);
         localStorage.setItem("loginMethod", "email");
         window.location.href = "geopulse.html";
-      } catch (error) {
-        console.error("Login failed:", error);
-        alert("Login failed: " + error.message);
-      }
-    });
-
-    // SIGN UP BUTTON
-    signupBtn.addEventListener("click", async () => {
-      const email = emailInput.value.trim();
-      const password = passwordInput.value;
-      if (!email || !password) return alert("Please enter email and password.");
-
-      try {
-        await createUserWithEmailAndPassword(auth, email, password);
-        alert("Account created! You can now log in.");
-      } catch (error) {
-        console.error("Signup failed:", error);
-        alert("Signup failed: " + error.message);
-      }
-    });
-
-    // LOGOUT
-    window.logout = () => {
-      signOut(auth)
-        .then(() => {
-          localStorage.clear();
-          document.getElementById("welcomeMsg").innerText = "";
-          document.getElementById("profilePic").style.display = "none";
-          alert("Logged out successfully!");
-        })
-        .catch(err => {
-          console.error("Logout error:", err);
-          alert("Logout failed: " + err.message);
-        });
-    };
-
-    // GOOGLE SIGN-IN CALLBACK
-    window.handleCredentialResponse = (response) => {
-      try {
-        const data = JSON.parse(atob(response.credential.split(".")[1]));
-        localStorage.setItem("userEmail", data.email);
-        localStorage.setItem("userName", data.name);
-        localStorage.setItem("userPicture", data.picture);
-        localStorage.setItem("loginMethod", "google");
-        window.location.href = "geopulse.html";
       } catch (e) {
-        console.error("Failed to parse Google credential:", e);
-        alert("Google Sign-In failed.");
+        alert(e.message);
       }
+    });
+
+    document.getElementById("signupBtn").addEventListener("click", async () => {
+      try {
+        await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+        alert("Account created. You can now log in.");
+      } catch (e) {
+        alert(e.message);
+      }
+    });
+
+    window.logout = () => {
+      signOut(auth).then(() => {
+        localStorage.clear();
+        alert("Logged out");
+      });
     };
 
-    // Render Google button centered
+    // Google Sign-In callback
+    window.handleCredentialResponse = (response) => {
+      const data = JSON.parse(atob(response.credential.split(".")[1]));
+      localStorage.setItem("userEmail", data.email);
+      localStorage.setItem("userName", data.name);
+      localStorage.setItem("userPicture", data.picture);
+      localStorage.setItem("loginMethod", "google");
+      window.location.href = "geopulse.html";
+    };
+
+    // Render Google button
     document.addEventListener("DOMContentLoaded", () => {
-      const tryRenderGoogle = () => {
-        if (window.google && google.accounts && google.accounts.id) {
+      const waitForGoogle = () => {
+        if (window.google?.accounts?.id) {
           google.accounts.id.initialize({
-            client_id: "922030653595-o1rv3g85jlhv5e6mm05i9aq72gltf72m.apps.googleusercontent.com",
+            client_id: "922030653595-fm09b69bkirqh2bcdts0ia9u2m2jo4b3.apps.googleusercontent.com",
             callback: handleCredentialResponse
           });
           google.accounts.id.renderButton(
@@ -193,10 +164,10 @@
             { theme: "outline", size: "large", width: "250px" }
           );
         } else {
-          setTimeout(tryRenderGoogle, 200);
+          setTimeout(waitForGoogle, 200);
         }
       };
-      tryRenderGoogle();
+      waitForGoogle();
     });
   </script>
 </body>
