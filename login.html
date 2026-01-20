@@ -76,7 +76,7 @@
     <p id="welcomeMsg"></p>
     <img id="profilePic" width="80" style="display:none"/>
 
-    <!-- Email/Password Login -->
+    <!-- Email/Password -->
     <input type="email" id="email" placeholder="Email"/>
     <input type="password" id="password" placeholder="Password"/>
     <button id="loginBtn" class="login-btn">Login</button>
@@ -94,9 +94,14 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut }
-      from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
 
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyAr3OXd-A18RfsFuVQrcr4QsZ1wPJI6JMw",
       authDomain: "password-and-email-cca57.firebaseapp.com",
@@ -114,34 +119,45 @@
     const emailInput = document.getElementById("email");
     const passwordInput = document.getElementById("password");
 
+    // LOGIN
     document.getElementById("loginBtn").addEventListener("click", async () => {
       try {
-        const user = await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+        const user = await signInWithEmailAndPassword(
+          auth,
+          emailInput.value,
+          passwordInput.value
+        );
         localStorage.setItem("userEmail", user.user.email);
         localStorage.setItem("loginMethod", "email");
         window.location.href = "geopulse.html";
       } catch (e) {
-        alert(e.message);
+        alert("Login failed: " + e.message);
       }
     });
 
+    // SIGN UP
     document.getElementById("signupBtn").addEventListener("click", async () => {
       try {
-        await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+        await createUserWithEmailAndPassword(
+          auth,
+          emailInput.value,
+          passwordInput.value
+        );
         alert("Account created. You can now log in.");
       } catch (e) {
-        alert(e.message);
+        alert("Signup failed: " + e.message);
       }
     });
 
+    // LOGOUT
     window.logout = () => {
       signOut(auth).then(() => {
         localStorage.clear();
-        alert("Logged out");
+        alert("Logged out successfully");
       });
     };
 
-    // Google Sign-In callback
+    // GOOGLE CALLBACK
     window.handleCredentialResponse = (response) => {
       const data = JSON.parse(atob(response.credential.split(".")[1]));
       localStorage.setItem("userEmail", data.email);
@@ -151,14 +167,15 @@
       window.location.href = "geopulse.html";
     };
 
-    // Render Google button
+    // INIT GOOGLE BUTTON
     document.addEventListener("DOMContentLoaded", () => {
       const waitForGoogle = () => {
-        if (window.google?.accounts?.id) {
+        if (window.google && google.accounts && google.accounts.id) {
           google.accounts.id.initialize({
             client_id: "922030653595-fm09b69bkirqh2bcdts0ia9u2m2jo4b3.apps.googleusercontent.com",
             callback: handleCredentialResponse
           });
+
           google.accounts.id.renderButton(
             document.getElementById("googleBtn"),
             { theme: "outline", size: "large", width: "250px" }
