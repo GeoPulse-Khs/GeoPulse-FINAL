@@ -8,9 +8,6 @@
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <style>
     body {
       margin: 0;
@@ -39,6 +36,7 @@
       max-width: 100%;
     }
 
+    /* Sidebar */
     .sidebar {
       height: 100%;
       width: 0;
@@ -129,7 +127,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1rem;
+      font-size: 2rem;
       font-weight: bold;
       border-bottom-left-radius: 12px;
       border-bottom-right-radius: 12px;
@@ -138,6 +136,46 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.2);
       flex-direction: column;
       gap: 8px;
+    }
+
+    .gyro-values {
+      margin-top: -10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .gyro-row {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #1e3c72;
+      display: flex;
+      justify-content: space-between;
+      width: 80%;
+    }
+
+    .gyro-row span {
+      color: #333;
+      font-weight: bold;
+    }
+
+    .rainfall-box {
+      font-size: 1.2rem;
+      align-items: flex-start;
+      padding: 10px 15px;
+    }
+
+    .rainfall-part {
+      width: 100%;
+      text-align: left;
+      margin: 6px 0;
+      font-size: 1rem;
+      color: #1e3c72;
+    }
+
+    .rainfall-part span {
+      color: #333;
+      font-weight: bold;
     }
 
     .right-panel {
@@ -185,18 +223,35 @@
       width: 100%;
     }
 
-    #map { height: 100%; width: 100%; }
+    #map {
+      height: 100%;
+      width: 100%;
+    }
 
     @media (max-width: 768px) {
-      .container { flex-direction: column; height: auto; }
-      .five-columns, .right-panel { width: 100%; }
-      .five-columns { grid-template-columns: 1fr; }
-      .map-box { height: 200px; }
+      .container {
+        flex-direction: column;
+        height: auto;
+      }
+
+      .five-columns,
+      .right-panel {
+        width: 100%;
+      }
+
+      .five-columns {
+        grid-template-columns: 1fr;
+      }
+
+      .map-box {
+        height: 200px;
+      }
     }
   </style>
 </head>
 <body>
 
+  <!-- Sidebar -->
   <div id="mySidebar" class="sidebar">
     <span class="closebtn" onclick="toggleSidebar()">&times;</span>
     <a href="#">Settings</a>
@@ -211,25 +266,40 @@
   </div>
 
   <div class="container">
+    <!-- Sensor Columns -->
     <div class="five-columns">
       <div class="sensor-card">
         <div class="sensor-name-box">Vibration</div>
-        <div class="sensor-value-box"><canvas id="chartVibration"></canvas></div>
+        <div class="sensor-value-box" id="Vibration">--</div>
       </div>
       <div class="sensor-card">
         <div class="sensor-name-box">Moisture</div>
-        <div class="sensor-value-box"><canvas id="chartMoisture"></canvas></div>
+        <div class="sensor-value-box" id="Moisture">--</div>
       </div>
       <div class="sensor-card">
         <div class="sensor-name-box">Gyro</div>
-        <div class="sensor-value-box"><canvas id="chartGyro"></canvas></div>
+        <div class="sensor-value-box">
+          <div class="gyro-values">
+            <div class="gyro-row">Yaw: <span id="Yaw">--</span></div>
+            <div class="gyro-row">Pitch: <span id="Pitch">--</span></div>
+            <div class="gyro-row">Roll: <span id="Roll">--</span></div>
+          </div>
+        </div>
       </div>
       <div class="sensor-card">
         <div class="sensor-name-box">Rainfall</div>
-        <div class="sensor-value-box"><canvas id="chartRainfall"></canvas></div>
+        <div class="sensor-value-box rainfall-box">
+          <div class="rainfall-part">
+            <strong>Total Rainfall:</strong> <span id="Rainfall">--</span>
+          </div>
+          <div class="rainfall-part">
+            <strong>Rainfall per Minute:</strong> <span id="RainfallPerMin">-- mm</span>
+          </div>
+        </div>
       </div>
     </div>
 
+    <!-- Right Panel -->
     <div class="right-panel">
       <div class="weather-box" id="weather-box">
         <img src="https://cdn-icons-png.flaticon.com/512/1163/1163624.png" alt="Weather" class="weather-icon" id="weather-icon" />
@@ -245,8 +315,11 @@
     </div>
   </div>
 
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
+
+  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
   <script>
@@ -266,55 +339,57 @@
       messagingSenderId: "977422517110",
       appId: "1:977422517110:web:a2e438ac42269d21b1b057"
     };
+
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // ===== Chart.js Setup =====
-    function createLineChart(ctx, label, color) {
-      return new Chart(ctx, {
-        type: 'line',
-        data: { labels: [], datasets: [{ label: label, data: [], borderColor: color, backgroundColor: color+'33', tension: 0.3 }] },
-        options: { animation: false, responsive: true, scales: { x: { ticks: { color: '#1e3c72' } }, y: { beginAtZero: true, ticks: { color: '#1e3c72' } } }, plugins: { legend: { display: false } } }
-      });
-    }
-
-    const chartVibration = createLineChart(document.getElementById('chartVibration'), 'Vibration', '#0d6efd');
-    const chartMoisture  = createLineChart(document.getElementById('chartMoisture'), 'Moisture', '#198754');
-    const chartGyro      = createLineChart(document.getElementById('chartGyro'), 'Gyro', '#ffc107');
-    const chartRainfall  = createLineChart(document.getElementById('chartRainfall'), 'Rainfall', '#dc3545');
-
-    function updateChart(chart, value) {
-      const time = new Date().toLocaleTimeString();
-      chart.data.labels.push(time);
-      chart.data.datasets[0].data.push(Number(value) || 0);
-      if (chart.data.labels.length > 20) {
-        chart.data.labels.shift();
-        chart.data.datasets[0].data.shift();
-      }
-      chart.update();
-    }
-
-    // Firebase listeners for live chart updates
-    const sensors = [
-      { ref: "Vibration", chart: chartVibration },
-      { ref: "Moisture", chart: chartMoisture },
-      { ref: "Yaw", chart: chartGyro },
-      { ref: "Rainfall", chart: chartRainfall },
-      { ref: "RainPerMinute", chart: chartRainfall }
-    ];
-
-    sensors.forEach(sensor => {
-      db.ref(sensor.ref).on("value", snap => {
-        const val = snap.val();
-        updateChart(sensor.chart, val);
+    // Vibration & Moisture
+    ["Vibration", "Moisture"].forEach(sensor => {
+      const ref = db.ref(sensor);
+      const box = document.getElementById(sensor);
+      ref.on("value", snapshot => {
+        const val = snapshot.val() ?? "--";
+        box.textContent = val;
+      }, err => {
+        console.error(`${sensor} error:`, err);
+        box.textContent = "Err";
       });
     });
 
-    // Map
+    // Gyro (Yaw, Pitch, Roll)
+    ["Yaw", "Pitch", "Roll"].forEach(axis => {
+      const ref = db.ref(axis);
+      const span = document.getElementById(axis);
+      ref.on("value", snapshot => {
+        const val = snapshot.val() ?? "--";
+        span.textContent = val;
+      }, err => {
+        console.error(`${axis} error:`, err);
+        span.textContent = "Err";
+      });
+    });
+
+    // Rainfall (Total)
+    db.ref("Rainfall").on("value", snap => {
+      const val = snap.val();
+      document.getElementById("Rainfall").textContent = val ?? "--";
+    });
+
+    // Rainfall per Minute
+    db.ref("RainPerMinute").on("value", snap => {
+      const val = snap.val();
+      document.getElementById("RainfallPerMin").textContent = val ? `${val} mm` : "-- mm";
+    });
+
+    // Leaflet Map
     const khs = [14.56791, 121.06327];
     const map = L.map('map').setView(khs, 18);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
-    L.marker(khs).addTo(map).bindPopup("<b>Kapitolyo High School</b><br>San Ignacio St, Pasig").openPopup();
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+    L.marker(khs).addTo(map)
+      .bindPopup("<b>Kapitolyo High School</b><br>San Ignacio St, Pasig")
+      .openPopup();
 
     // Clock
     let weatherTimezoneOffsetSec = 8 * 3600;
@@ -326,37 +401,48 @@
       const minute = d.getUTCMinutes().toString().padStart(2, '0');
       const ampm = hour >= 12 ? 'pm' : 'am';
       const hour12 = hour % 12 === 0 ? 12 : hour % 12;
-      document.getElementById('weather-time').textContent = `${dayName}, ${hour12}:${minute} ${ampm}`;
+      document.getElementById('weather-time').textContent =
+        `${dayName}, ${hour12}:${minute} ${ampm}`;
     }
-    updateClock(); setInterval(updateClock, 1000);
+    updateClock();
+    setInterval(updateClock, 1000);
 
     // Weather
     async function updateWeather() {
       const apiKey = "349c731b1225933394747835a8e6b103";
       const lat = 14.56791, lon = 121.06327;
       try {
-        const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`);
+        const res = await fetch(
+          `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`
+        );
         const data = await res.json();
         document.getElementById("weather-temp").textContent = `${Math.round(data.main.temp)}°C`;
-        document.getElementById("weather-desc").innerHTML = `${data.weather[0].description}<br>Feels like ${Math.round(data.main.feels_like)}°<br>Pasig`;
-        document.getElementById("weather-icon").src = `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
+        document.getElementById("weather-desc").innerHTML =
+          `${data.weather[0].description}<br>Feels like ${Math.round(data.main.feels_like)}°<br>Pasig`;
+        document.getElementById("weather-icon").src =
+          `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
         if (typeof data.timezone === "number") weatherTimezoneOffsetSec = data.timezone;
-      } catch(e) { console.error("Weather error:", e); }
+      } catch (e) {
+        console.error("Weather error:", e);
+      }
     }
-    updateWeather(); setInterval(updateWeather, 600000);
+    updateWeather();
+    setInterval(updateWeather, 600000);
+  </script>
 
-    // Logout
-    document.addEventListener("DOMContentLoaded", () => {
-      const btn = document.getElementById("logout-btn");
-      if (!btn) return;
-      btn.addEventListener("click", (e) => {
-        e.preventDefault();
-        try { document.getElementById("mySidebar").style.width = "0"; } catch {}
-        try { if (window.firebase && firebase.database) firebase.database().ref().off(); } catch {}
-        try { localStorage.clear(); sessionStorage.clear(); } catch {}
-        window.location.replace("index.html");
-      });
+  <!-- Safe Logout -->
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const btn = document.getElementById("logout-btn");
+    if (!btn) return;
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      try { document.getElementById("mySidebar").style.width = "0"; } catch {}
+      try { if (window.firebase && firebase.database) firebase.database().ref().off(); } catch {}
+      try { localStorage.clear(); sessionStorage.clear(); } catch {}
+      window.location.replace("index.html");
     });
+  });
   </script>
 
 </body>
