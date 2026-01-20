@@ -98,7 +98,7 @@
     .five-columns {
       flex: 3;
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 20px;
       padding: 20px;
     }
@@ -138,58 +138,44 @@
       gap: 8px;
     }
 
-    /* ===== SPEEDOMETER ===== */
-    .speedometer {
-      width: 220px;
-      height: 110px;
-      position: relative;
-      overflow: hidden;
+    .gyro-values {
+      margin-top: -10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
 
-    .speedometer .arc {
-      width: 220px;
-      height: 220px;
-      border-radius: 50%;
-      background: conic-gradient(
-        #28a745 0deg,
-        #ffc107 120deg,
-        #dc3545 180deg,
-        transparent 180deg
-      );
-      position: absolute;
-      bottom: 0;
-    }
-
-    .speedometer .center {
-      width: 14px;
-      height: 14px;
-      background: #333;
-      border-radius: 50%;
-      position: absolute;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 3;
-    }
-
-    .speedometer .needle {
-      width: 4px;
-      height: 90px;
-      background: red;
-      position: absolute;
-      bottom: 0;
-      left: 50%;
-      transform-origin: bottom center;
-      transform: rotate(-90deg);
-      transition: transform 0.4s ease-out;
-      z-index: 2;
-    }
-
-    .speedometer-value {
-      margin-top: 10px;
-      font-size: 1.4rem;
-      font-weight: bold;
+    .gyro-row {
+      font-size: 1.1rem;
+      font-weight: 600;
       color: #1e3c72;
+      display: flex;
+      justify-content: space-between;
+      width: 80%;
+    }
+
+    .gyro-row span {
+      color: #333;
+      font-weight: bold;
+    }
+
+    .rainfall-box {
+      font-size: 1.2rem;
+      align-items: flex-start;
+      padding: 10px 15px;
+    }
+
+    .rainfall-part {
+      width: 100%;
+      text-align: left;
+      margin: 6px 0;
+      font-size: 1rem;
+      color: #1e3c72;
+    }
+
+    .rainfall-part span {
+      color: #333;
+      font-weight: bold;
     }
 
     .right-panel {
@@ -197,7 +183,36 @@
       display: flex;
       flex-direction: column;
       padding: 20px;
+      justify-content: flex-start;
       gap: 20px;
+    }
+
+    .weather-box {
+      background: linear-gradient(to bottom, #6ea5ff, #2a57b8);
+      color: white;
+      border: 2px solid white;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .weather-icon {
+      width: 64px;
+      height: 64px;
+    }
+
+    .weather-temp {
+      font-size: 3rem;
+      font-weight: bold;
+      margin: 10px 0 4px;
+    }
+
+    .weather-labels {
+      font-size: 0.9rem;
+      text-align: center;
+      line-height: 1.3;
     }
 
     .map-box {
@@ -205,128 +220,101 @@
       border-radius: 12px;
       overflow: hidden;
       height: 250px;
+      width: 100%;
     }
 
     #map {
       height: 100%;
       width: 100%;
     }
+
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+        height: auto;
+      }
+
+      .five-columns,
+      .right-panel {
+        width: 100%;
+      }
+
+      .five-columns {
+        grid-template-columns: 1fr;
+      }
+
+      .map-box {
+        height: 200px;
+      }
+    }
   </style>
 </head>
-
 <body>
+
+  <!-- Sidebar -->
+  <div id="mySidebar" class="sidebar">
+    <span class="closebtn" onclick="toggleSidebar()">&times;</span>
+    <a href="#">Settings</a>
+    <a href="history.html">Place History</a>
+    <a href="#">About</a>
+    <a href="#" class="logout" id="logout-btn">Log Out</a>
+  </div>
 
   <div class="logo-bar">
     <button class="openbtn" onclick="toggleSidebar()">☰</button>
-    <img src="logo2.jpg" class="logo-img" />
+    <img src="logo2.jpg" alt="GeoPulse Logo" class="logo-img" />
   </div>
 
   <div class="container">
+    <!-- Sensor Columns -->
     <div class="five-columns">
-
       <div class="sensor-card">
         <div class="sensor-name-box">Vibration</div>
         <div class="sensor-value-box" id="Vibration">--</div>
       </div>
-
       <div class="sensor-card">
         <div class="sensor-name-box">Moisture</div>
         <div class="sensor-value-box" id="Moisture">--</div>
       </div>
-
       <div class="sensor-card">
         <div class="sensor-name-box">Gyro</div>
         <div class="sensor-value-box">
-          <div>Yaw: <span id="Yaw">--</span></div>
-          <div>Pitch: <span id="Pitch">--</span></div>
-          <div>Roll: <span id="Roll">--</span></div>
+          <div class="gyro-values">
+            <div class="gyro-row">Yaw: <span id="Yaw">--</span></div>
+            <div class="gyro-row">Pitch: <span id="Pitch">--</span></div>
+            <div class="gyro-row">Roll: <span id="Roll">--</span></div>
+          </div>
         </div>
       </div>
-
       <div class="sensor-card">
         <div class="sensor-name-box">Rainfall</div>
-        <div class="sensor-value-box">
-          <div>Total: <span id="Rainfall">--</span></div>
-          <div>Per Min: <span id="RainfallPerMin">--</span></div>
-        </div>
-      </div>
-
-      <!-- SPEEDOMETER CARD -->
-      <div class="sensor-card">
-        <div class="sensor-name-box">Intensity Level</div>
-        <div class="sensor-value-box">
-          <div class="speedometer">
-            <div class="arc"></div>
-            <div class="needle" id="speedNeedle"></div>
-            <div class="center"></div>
+        <div class="sensor-value-box rainfall-box">
+          <div class="rainfall-part">
+            <strong>Total Rainfall:</strong> <span id="Rainfall">--</span>
           </div>
-          <div class="speedometer-value" id="speedValue">0</div>
+          <div class="rainfall-part">
+            <strong>Rainfall per Minute:</strong> <span id="RainfallPerMin">-- mm</span>
+          </div>
         </div>
       </div>
-
     </div>
 
+    <!-- Right Panel -->
     <div class="right-panel">
+      <div class="weather-box" id="weather-box">
+        <img src="https://cdn-icons-png.flaticon.com/512/1163/1163624.png" alt="Weather" class="weather-icon" id="weather-icon" />
+        <div class="weather-temp" id="weather-temp">--°C</div>
+        <div class="weather-labels" id="weather-labels">
+          <div id="weather-desc">Loading weather...</div>
+          <div id="weather-time" style="margin-top:8px;font-weight:600">--:-- --</div>
+        </div>
+      </div>
       <div class="map-box">
         <div id="map"></div>
       </div>
     </div>
   </div>
 
-  <!-- Firebase -->
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyBPkCOrLoVuStEvhzWQeCkm3QdD7MK3syI",
-      databaseURL: "https://geopulse-khs2025-default-rtdb.asia-southeast1.firebasedatabase.app"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    ["Vibration","Moisture"].forEach(s => {
-      db.ref(s).on("value", snap => {
-        document.getElementById(s).textContent = snap.val() ?? "--";
-      });
-    });
-
-    ["Yaw","Pitch","Roll"].forEach(a => {
-      db.ref(a).on("value", snap => {
-        document.getElementById(a).textContent = snap.val() ?? "--";
-      });
-    });
-
-    db.ref("Rainfall").on("value", s => {
-      document.getElementById("Rainfall").textContent = s.val() ?? "--";
-    });
-
-    db.ref("RainPerMinute").on("value", s => {
-      document.getElementById("RainfallPerMin").textContent = s.val() ?? "--";
-    });
-
-    // SPEEDOMETER LOGIC
-    function updateSpeedometer(value) {
-      const needle = document.getElementById("speedNeedle");
-      const label = document.getElementById("speedValue");
-      const v = Math.max(0, Math.min(100, value));
-      needle.style.transform = `rotate(${(v / 100) * 180 - 90}deg)`;
-      label.textContent = v;
-    }
-
-    // Demo: link to Vibration
-    db.ref("Vibration").on("value", snap => {
-      const v = Number(snap.val());
-      if (!isNaN(v)) updateSpeedometer(v);
-    });
-
-    // Map
-    const map = L.map('map').setView([14.56791,121.06327],18);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-    L.marker([14.56791,121.06327]).addTo(map);
-  </script>
-
-</body>
-</html>
+  <script src="https://www.gstatic
