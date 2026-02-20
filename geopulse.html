@@ -1,363 +1,244 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>GeoPulse Sensor Dashboard</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GeoPulse Sensor Dashboard</title>
 
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  font-family: system-ui, Arial, sans-serif;
+  background: linear-gradient(to bottom, #1e3c72, #2a5298);
+  color: white;
+  overflow-x: hidden;
+}
 
-  <style>
-    body {
-      margin: 0;
-      font-family: system-ui, Arial, sans-serif;
-      background: linear-gradient(to bottom, #1e3c72, #2a5298);
-      color: white;
-      box-sizing: border-box;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
+/* ===== HEADER / LOGO BAR ===== */
+.logo-bar {
+  height: 10vh;
+  min-height: 70px;
+  max-height: 120px;
+  background-color: #123456;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 3px solid white;
+  position: relative;
+}
 
-    .logo-bar {
-      height: 80px;
-      background-color: #123456;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-bottom: 3px solid white;
-      position: relative;
-    }
+.logo-img {
+  max-height: 70%;
+  max-width: 90%;
+  height: auto;
+  width: auto;
+  object-fit: contain;
+}
 
-    .logo-img {
-      height: 60px;
-      object-fit: contain;
-      max-width: 100%;
-    }
+/* Sidebar */
+.sidebar {
+  height: 100%;
+  width: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background-color: #111;
+  overflow-x: hidden;
+  transition: 0.3s;
+  padding-top: 10vh;
+  z-index: 1001;
+}
 
-    .sidebar {
-      height: 100%;
-      width: 0;
-      position: fixed;
-      top: 0;
-      left: 0;
-      background-color: #111;
-      overflow-x: hidden;
-      transition: 0.3s;
-      padding-top: 80px;
-      z-index: 1001;
-    }
+.sidebar a {
+  padding: 12px 20px;
+  text-decoration: none;
+  font-size: 18px;
+  color: white;
+  display: block;
+  transition: 0.2s;
+  cursor: pointer;
+}
 
-    .sidebar a {
-      padding: 12px 20px;
-      text-decoration: none;
-      font-size: 18px;
-      color: white;
-      display: block;
-      transition: 0.2s;
-      cursor: pointer;
-    }
+.sidebar a:hover {
+  background-color: white;
+  color: black;
+}
 
-    .sidebar a:hover {
-      background-color: white;
-      color: black;
-    }
+.sidebar a.logout:hover {
+  background-color: red;
+  color: white;
+}
 
-    .sidebar a.logout:hover {
-      background-color: red;
-      color: white;
-    }
+.sidebar .closebtn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  font-size: 30px;
+  cursor: pointer;
+}
 
-    .sidebar .closebtn {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      font-size: 30px;
-      color: white;
-      cursor: pointer;
-    }
+.openbtn {
+  position: absolute;
+  left: 20px;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+}
 
-    .openbtn {
-      position: absolute;
-      left: 20px;
-      background-color: #123456;
-      border: none;
-      color: white;
-      font-size: 24px;
-      cursor: pointer;
-    }
+/* ===== MAIN LAYOUT ===== */
+.container {
+  display: flex;
+  height: 90vh;
+  width: 100%;
+}
 
-    .container {
-      flex: 1;
-      display: flex;
-      height: calc(100vh - 80px);
-    }
+.five-columns {
+  flex: 3;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  padding: 20px;
+}
 
-    .five-columns {
-      flex: 3;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 20px;
-      padding: 20px;
-    }
+.sensor-card {
+  display: flex;
+  flex-direction: column;
+}
 
-    .sensor-card {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-    }
+.sensor-name-box {
+  background-color: white;
+  color: #1e3c72;
+  padding: 10px;
+  font-weight: bold;
+  text-align: center;
+  border-radius: 12px 12px 0 0;
+}
 
-    .sensor-name-box {
-      background-color: #ffffff;
-      color: #1e3c72;
-      padding: 10px;
-      font-weight: bold;
-      text-align: center;
-      border-top-left-radius: 12px;
-      border-top-right-radius: 12px;
-      font-size: 1.1rem;
-    }
+.sensor-value-box {
+  background-color: white;
+  color: #333;
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
 
-    .sensor-value-box {
-      background-color: white;
-      color: #333;
-      flex-grow: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1rem;
-      font-weight: bold;
-      border-bottom-left-radius: 12px;
-      border-bottom-right-radius: 12px;
-      border: 2px solid white;
-      border-top: none;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-      flex-direction: column;
-      gap: 8px;
-    }
+/* ===== RIGHT PANEL ===== */
+.right-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  gap: 20px;
+}
 
-    .right-panel {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      padding: 20px;
-      justify-content: flex-start;
-      gap: 20px;
-    }
+.weather-box {
+  background: linear-gradient(to bottom, #6ea5ff, #2a57b8);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+}
 
-    .weather-box {
-      background: linear-gradient(to bottom, #6ea5ff, #2a57b8);
-      color: white;
-      border: 2px solid white;
-      border-radius: 12px;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
+.weather-icon {
+  width: 64px;
+}
 
-    .weather-icon {
-      width: 64px;
-      height: 64px;
-    }
+.weather-temp {
+  font-size: 3rem;
+  font-weight: bold;
+}
 
-    .weather-temp {
-      font-size: 3rem;
-      font-weight: bold;
-      margin: 10px 0 4px;
-    }
+.map-box {
+  border-radius: 12px;
+  overflow: hidden;
+  flex-grow: 1;
+}
 
-    .weather-labels {
-      font-size: 0.9rem;
-      text-align: center;
-      line-height: 1.3;
-    }
+#map {
+  height: 100%;
+  width: 100%;
+}
 
-    .map-box {
-      border: 2px solid white;
-      border-radius: 12px;
-      overflow: hidden;
-      height: 250px;
-      width: 100%;
-    }
+/* ===== MOBILE ===== */
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+    height: auto;
+  }
 
-    #map { height: 100%; width: 100%; }
+  .five-columns {
+    grid-template-columns: 1fr;
+  }
 
-    @media (max-width: 768px) {
-      .container { flex-direction: column; height: auto; }
-      .five-columns, .right-panel { width: 100%; }
-      .five-columns { grid-template-columns: 1fr; }
-      .map-box { height: 200px; }
-    }
-  </style>
+  .map-box {
+    height: 250px;
+  }
+}
+</style>
 </head>
+
 <body>
 
-  <div id="mySidebar" class="sidebar">
-    <span class="closebtn" onclick="toggleSidebar()">&times;</span>
-    <a href="#">Settings</a>
-    <a href="history.html">Place History</a>
-    <a href="#">About</a>
-    <a href="#" class="logout" id="logout-btn">Log Out</a>
-  </div>
+<div id="mySidebar" class="sidebar">
+  <span class="closebtn" onclick="toggleSidebar()">&times;</span>
+  <a href="#">Settings</a>
+  <a href="history.html">Place History</a>
+  <a href="#">About</a>
+  <a href="#" class="logout">Log Out</a>
+</div>
 
-  <div class="logo-bar">
-    <button class="openbtn" onclick="toggleSidebar()">☰</button>
-    <img src="logo2.jpg" alt="GeoPulse Logo" class="logo-img" />
-  </div>
+<div class="logo-bar">
+  <button class="openbtn" onclick="toggleSidebar()">☰</button>
+  <img src="logo2.jpg" alt="GeoPulse Logo" class="logo-img">
+</div>
 
-  <div class="container">
-    <div class="five-columns">
-      <div class="sensor-card">
-        <div class="sensor-name-box">Vibration</div>
-        <div class="sensor-value-box"><canvas id="chartVibration"></canvas></div>
-      </div>
-      <div class="sensor-card">
-        <div class="sensor-name-box">Moisture</div>
-        <div class="sensor-value-box"><canvas id="chartMoisture"></canvas></div>
-      </div>
-      <div class="sensor-card">
-        <div class="sensor-name-box">Gyro</div>
-        <div class="sensor-value-box"><canvas id="chartGyro"></canvas></div>
-      </div>
-      <div class="sensor-card">
-        <div class="sensor-name-box">Rainfall</div>
-        <div class="sensor-value-box"><canvas id="chartRainfall"></canvas></div>
-      </div>
+<div class="container">
+  <div class="five-columns">
+    <div class="sensor-card">
+      <div class="sensor-name-box">Vibration</div>
+      <div class="sensor-value-box"><canvas></canvas></div>
     </div>
-
-    <div class="right-panel">
-      <div class="weather-box" id="weather-box">
-        <img src="https://cdn-icons-png.flaticon.com/512/1163/1163624.png" alt="Weather" class="weather-icon" id="weather-icon" />
-        <div class="weather-temp" id="weather-temp">--°C</div>
-        <div class="weather-labels" id="weather-labels">
-          <div id="weather-desc">Loading weather...</div>
-          <div id="weather-time" style="margin-top:8px;font-weight:600">--:-- --</div>
-        </div>
-      </div>
-      <div class="map-box">
-        <div id="map"></div>
-      </div>
+    <div class="sensor-card">
+      <div class="sensor-name-box">Moisture</div>
+      <div class="sensor-value-box"><canvas></canvas></div>
+    </div>
+    <div class="sensor-card">
+      <div class="sensor-name-box">Gyro</div>
+      <div class="sensor-value-box"><canvas></canvas></div>
+    </div>
+    <div class="sensor-card">
+      <div class="sensor-name-box">Rainfall</div>
+      <div class="sensor-value-box"><canvas></canvas></div>
     </div>
   </div>
 
-  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <div class="right-panel">
+    <div class="weather-box">
+      <div class="weather-temp">--°C</div>
+      <div>Loading weather...</div>
+    </div>
+    <div class="map-box">
+      <div id="map"></div>
+    </div>
+  </div>
+</div>
 
-  <script>
-    // Sidebar toggle
-    function toggleSidebar() {
-      const sidebar = document.getElementById("mySidebar");
-      sidebar.style.width = sidebar.style.width === "200px" ? "0" : "200px";
-    }
-
-    // Firebase init
-    const firebaseConfig = {
-      apiKey: "AIzaSyBPkCOrLoVuStEvhzWQeCkm3QdD7MK3syI",
-      authDomain: "iotdb-629a2.firebaseapp.com",
-      databaseURL: "https://geopulse-khs2025-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "iotdb-629a2",
-      storageBucket: "iotdb-629a2.appspot.com",
-      messagingSenderId: "977422517110",
-      appId: "1:977422517110:web:a2e438ac42269d21b1b057"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    // ===== Chart.js Setup =====
-    function createLineChart(ctx, label, color) {
-      return new Chart(ctx, {
-        type: 'line',
-        data: { labels: [], datasets: [{ label: label, data: [], borderColor: color, backgroundColor: color+'33', tension: 0.3 }] },
-        options: { animation: false, responsive: true, scales: { x: { ticks: { color: '#1e3c72' } }, y: { beginAtZero: true, ticks: { color: '#1e3c72' } } }, plugins: { legend: { display: false } } }
-      });
-    }
-
-    const chartVibration = createLineChart(document.getElementById('chartVibration'), 'Vibration', '#0d6efd');
-    const chartMoisture  = createLineChart(document.getElementById('chartMoisture'), 'Moisture', '#198754');
-    const chartGyro      = createLineChart(document.getElementById('chartGyro'), 'Gyro', '#ffc107');
-    const chartRainfall  = createLineChart(document.getElementById('chartRainfall'), 'Rainfall', '#dc3545');
-
-    function updateChart(chart, value) {
-      const time = new Date().toLocaleTimeString();
-      chart.data.labels.push(time);
-      chart.data.datasets[0].data.push(Number(value) || 0);
-      if (chart.data.labels.length > 20) {
-        chart.data.labels.shift();
-        chart.data.datasets[0].data.shift();
-      }
-      chart.update();
-    }
-
-    // Firebase listeners for live chart updates
-    const sensors = [
-      { ref: "Vibration", chart: chartVibration },
-      { ref: "Moisture", chart: chartMoisture },
-      { ref: "Yaw", chart: chartGyro },
-      { ref: "Rainfall", chart: chartRainfall },
-      { ref: "RainPerMinute", chart: chartRainfall }
-    ];
-
-    sensors.forEach(sensor => {
-      db.ref(sensor.ref).on("value", snap => {
-        const val = snap.val();
-        updateChart(sensor.chart, val);
-      });
-    });
-
-    // Map
-    const khs = [14.56791, 121.06327];
-    const map = L.map('map').setView(khs, 18);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
-    L.marker(khs).addTo(map).bindPopup("<b>Kapitolyo High School</b><br>San Ignacio St, Pasig").openPopup();
-
-    // Clock
-    let weatherTimezoneOffsetSec = 8 * 3600;
-    function updateClock() {
-      const d = new Date(Date.now() + (weatherTimezoneOffsetSec * 1000));
-      const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-      const dayName = days[d.getUTCDay()];
-      const hour = d.getUTCHours();
-      const minute = d.getUTCMinutes().toString().padStart(2, '0');
-      const ampm = hour >= 12 ? 'pm' : 'am';
-      const hour12 = hour % 12 === 0 ? 12 : hour % 12;
-      document.getElementById('weather-time').textContent = `${dayName}, ${hour12}:${minute} ${ampm}`;
-    }
-    updateClock(); setInterval(updateClock, 1000);
-
-    // Weather
-    async function updateWeather() {
-      const apiKey = "349c731b1225933394747835a8e6b103";
-      const lat = 14.56791, lon = 121.06327;
-      try {
-        const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`);
-        const data = await res.json();
-        document.getElementById("weather-temp").textContent = `${Math.round(data.main.temp)}°C`;
-        document.getElementById("weather-desc").innerHTML = `${data.weather[0].description}<br>Feels like ${Math.round(data.main.feels_like)}°<br>Pasig`;
-        document.getElementById("weather-icon").src = `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
-        if (typeof data.timezone === "number") weatherTimezoneOffsetSec = data.timezone;
-      } catch(e) { console.error("Weather error:", e); }
-    }
-    updateWeather(); setInterval(updateWeather, 600000);
-
-    // Logout
-    document.addEventListener("DOMContentLoaded", () => {
-      const btn = document.getElementById("logout-btn");
-      if (!btn) return;
-      btn.addEventListener("click", (e) => {
-        e.preventDefault();
-        try { document.getElementById("mySidebar").style.width = "0"; } catch {}
-        try { if (window.firebase && firebase.database) firebase.database().ref().off(); } catch {}
-        try { localStorage.clear(); sessionStorage.clear(); } catch {}
-        window.location.replace("index.html");
-      });
-    });
-  </script>
+<script>
+function toggleSidebar() {
+  const sidebar = document.getElementById("mySidebar");
+  sidebar.style.width = sidebar.style.width === "200px" ? "0" : "200px";
+}
+</script>
 
 </body>
 </html>
