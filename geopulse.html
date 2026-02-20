@@ -23,22 +23,25 @@
       flex-direction: column;  
     }  
   
-    .logo-bar {  
-      height: 80px;  
-      background-color: #123456;  
-      display: flex;  
-      align-items: center;  
-      justify-content: center;  
-      border-bottom: 3px solid white;  
-      position: relative;  
-    }  
-  
-    .logo-img {  
-      height: 60px;  
-      object-fit: contain;  
-      max-width: 100%;  
-    }  
-  
+    .logo-bar {
+  min-height: 70px;
+  height: 10vh;              /* scales with screen height */
+  max-height: 120px;         /* prevents it from getting huge */
+  background-color: #123456;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 3px solid white;
+  position: relative;
+  padding: 0 10px;
+}
+
+.logo-img {
+  height: 80%;               /* scales inside logo-bar */
+  max-height: 90px;          /* cap size on large screens */
+  width: auto;
+  object-fit: contain;
+}
     .sidebar {  
       height: 100%;  
       width: 0;  
