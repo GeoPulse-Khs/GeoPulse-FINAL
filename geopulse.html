@@ -1,244 +1,257 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>GeoPulse Sensor Dashboard</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GeoPulse Sensor Dashboard</title>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
-<style>
-html, body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  width: 100%;
-  font-family: system-ui, Arial, sans-serif;
-  background: linear-gradient(to bottom, #1e3c72, #2a5298);
-  color: white;
-  overflow-x: hidden;
-}
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-/* ===== HEADER / LOGO BAR ===== */
-.logo-bar {
-  height: 10vh;
-  min-height: 70px;
-  max-height: 120px;
-  background-color: #123456;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-bottom: 3px solid white;
-  position: relative;
-}
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
 
-.logo-img {
-  max-height: 70%;
-  max-width: 90%;
-  height: auto;
-  width: auto;
-  object-fit: contain;
-}
+    body {
+      font-family: system-ui, Arial, sans-serif;
+      background: linear-gradient(to bottom, #1e3c72, #2a5298);
+      color: white;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+    }
 
-/* Sidebar */
-.sidebar {
-  height: 100%;
-  width: 0;
-  position: fixed;
-  top: 0;
-  left: 0;
-  background-color: #111;
-  overflow-x: hidden;
-  transition: 0.3s;
-  padding-top: 10vh;
-  z-index: 1001;
-}
+    .logo-bar {
+      height: 80px;
+      background-color: #123456;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 3px solid white;
+      position: relative;
+    }
 
-.sidebar a {
-  padding: 12px 20px;
-  text-decoration: none;
-  font-size: 18px;
-  color: white;
-  display: block;
-  transition: 0.2s;
-  cursor: pointer;
-}
+    .logo-img {
+      height: 60px;
+      object-fit: contain;
+      max-width: 100%;
+    }
 
-.sidebar a:hover {
-  background-color: white;
-  color: black;
-}
+    .sidebar {
+      height: 100%;
+      width: 0;
+      position: fixed;
+      top: 0;
+      left: 0;
+      background-color: #111;
+      overflow-x: hidden;
+      transition: 0.3s;
+      padding-top: 80px;
+      z-index: 1001;
+    }
 
-.sidebar a.logout:hover {
-  background-color: red;
-  color: white;
-}
+    .sidebar a {
+      padding: 12px 20px;
+      text-decoration: none;
+      font-size: 18px;
+      color: white;
+      display: block;
+      transition: 0.2s;
+      cursor: pointer;
+    }
 
-.sidebar .closebtn {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  font-size: 30px;
-  cursor: pointer;
-}
+    .sidebar a:hover {
+      background-color: white;
+      color: black;
+    }
 
-.openbtn {
-  position: absolute;
-  left: 20px;
-  background: none;
-  border: none;
-  color: white;
-  font-size: 24px;
-  cursor: pointer;
-}
+    .sidebar a.logout:hover {
+      background-color: red;
+      color: white;
+    }
 
-/* ===== MAIN LAYOUT ===== */
-.container {
-  display: flex;
-  height: 90vh;
-  width: 100%;
-}
+    .sidebar .closebtn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 30px;
+      color: white;
+      cursor: pointer;
+    }
 
-.five-columns {
-  flex: 3;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  padding: 20px;
-}
+    .openbtn {
+      position: absolute;
+      left: 20px;
+      background-color: #123456;
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+    }
 
-.sensor-card {
-  display: flex;
-  flex-direction: column;
-}
+    .container {
+      flex: 1;
+      display: flex;
+      min-height: calc(100dvh - 80px); /* FIXED mobile-safe height */
+    }
 
-.sensor-name-box {
-  background-color: white;
-  color: #1e3c72;
-  padding: 10px;
-  font-weight: bold;
-  text-align: center;
-  border-radius: 12px 12px 0 0;
-}
+    .five-columns {
+      flex: 3;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      padding: 20px;
+    }
 
-.sensor-value-box {
-  background-color: white;
-  color: #333;
-  flex-grow: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 0 0 12px 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-}
+    .sensor-card {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
 
-/* ===== RIGHT PANEL ===== */
-.right-panel {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 20px;
-  gap: 20px;
-}
+    .sensor-name-box {
+      background-color: #ffffff;
+      color: #1e3c72;
+      padding: 10px;
+      font-weight: bold;
+      text-align: center;
+      border-top-left-radius: 12px;
+      border-top-right-radius: 12px;
+      font-size: 1.1rem;
+    }
 
-.weather-box {
-  background: linear-gradient(to bottom, #6ea5ff, #2a57b8);
-  border-radius: 12px;
-  padding: 16px;
-  text-align: center;
-}
+    .sensor-value-box {
+      background-color: white;
+      color: #333;
+      flex-grow: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      font-weight: bold;
+      border-bottom-left-radius: 12px;
+      border-bottom-right-radius: 12px;
+      border: 2px solid white;
+      border-top: none;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      flex-direction: column;
+      gap: 8px;
+    }
 
-.weather-icon {
-  width: 64px;
-}
+    .right-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      justify-content: flex-start;
+      gap: 20px;
+    }
 
-.weather-temp {
-  font-size: 3rem;
-  font-weight: bold;
-}
+    .weather-box {
+      background: linear-gradient(to bottom, #6ea5ff, #2a57b8);
+      color: white;
+      border: 2px solid white;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
 
-.map-box {
-  border-radius: 12px;
-  overflow: hidden;
-  flex-grow: 1;
-}
+    .weather-icon {
+      width: 64px;
+      height: 64px;
+    }
 
-#map {
-  height: 100%;
-  width: 100%;
-}
+    .weather-temp {
+      font-size: 3rem;
+      font-weight: bold;
+      margin: 10px 0 4px;
+    }
 
-/* ===== MOBILE ===== */
-@media (max-width: 768px) {
-  .container {
-    flex-direction: column;
-    height: auto;
-  }
+    .weather-labels {
+      font-size: 0.9rem;
+      text-align: center;
+      line-height: 1.3;
+    }
 
-  .five-columns {
-    grid-template-columns: 1fr;
-  }
+    .map-box {
+      border: 2px solid white;
+      border-radius: 12px;
+      overflow: hidden;
+      height: 250px;
+      width: 100%;
+    }
 
-  .map-box {
-    height: 250px;
-  }
-}
-</style>
+    #map { height: 100%; width: 100%; }
+
+    @media (max-width: 768px) {
+      .container { flex-direction: column; }
+      .five-columns, .right-panel { width: 100%; }
+      .five-columns { grid-template-columns: 1fr; }
+      .map-box { height: 200px; }
+    }
+  </style>
 </head>
-
 <body>
 
-<div id="mySidebar" class="sidebar">
-  <span class="closebtn" onclick="toggleSidebar()">&times;</span>
-  <a href="#">Settings</a>
-  <a href="history.html">Place History</a>
-  <a href="#">About</a>
-  <a href="#" class="logout">Log Out</a>
-</div>
+  <div id="mySidebar" class="sidebar">
+    <span class="closebtn" onclick="toggleSidebar()">&times;</span>
+    <a href="#">Settings</a>
+    <a href="history.html">Place History</a>
+    <a href="#">About</a>
+    <a href="#" class="logout">Log Out</a>
+  </div>
 
-<div class="logo-bar">
-  <button class="openbtn" onclick="toggleSidebar()">☰</button>
-  <img src="logo2.jpg" alt="GeoPulse Logo" class="logo-img">
-</div>
+  <div class="logo-bar">
+    <button class="openbtn" onclick="toggleSidebar()">☰</button>
+    <img src="logo2.jpg" alt="GeoPulse Logo" class="logo-img" />
+  </div>
 
-<div class="container">
-  <div class="five-columns">
-    <div class="sensor-card">
-      <div class="sensor-name-box">Vibration</div>
-      <div class="sensor-value-box"><canvas></canvas></div>
+  <div class="container">
+    <div class="five-columns">
+      <div class="sensor-card">
+        <div class="sensor-name-box">Vibration</div>
+        <div class="sensor-value-box"><canvas></canvas></div>
+      </div>
+      <div class="sensor-card">
+        <div class="sensor-name-box">Moisture</div>
+        <div class="sensor-value-box"><canvas></canvas></div>
+      </div>
+      <div class="sensor-card">
+        <div class="sensor-name-box">Gyro</div>
+        <div class="sensor-value-box"><canvas></canvas></div>
+      </div>
+      <div class="sensor-card">
+        <div class="sensor-name-box">Rainfall</div>
+        <div class="sensor-value-box"><canvas></canvas></div>
+      </div>
     </div>
-    <div class="sensor-card">
-      <div class="sensor-name-box">Moisture</div>
-      <div class="sensor-value-box"><canvas></canvas></div>
-    </div>
-    <div class="sensor-card">
-      <div class="sensor-name-box">Gyro</div>
-      <div class="sensor-value-box"><canvas></canvas></div>
-    </div>
-    <div class="sensor-card">
-      <div class="sensor-name-box">Rainfall</div>
-      <div class="sensor-value-box"><canvas></canvas></div>
+
+    <div class="right-panel">
+      <div class="weather-box">
+        <img src="https://cdn-icons-png.flaticon.com/512/1163/1163624.png" class="weather-icon">
+        <div class="weather-temp">--°C</div>
+        <div class="weather-labels">Loading weather...</div>
+      </div>
+      <div class="map-box">
+        <div id="map"></div>
+      </div>
     </div>
   </div>
 
-  <div class="right-panel">
-    <div class="weather-box">
-      <div class="weather-temp">--°C</div>
-      <div>Loading weather...</div>
-    </div>
-    <div class="map-box">
-      <div id="map"></div>
-    </div>
-  </div>
-</div>
-
-<script>
-function toggleSidebar() {
-  const sidebar = document.getElementById("mySidebar");
-  sidebar.style.width = sidebar.style.width === "200px" ? "0" : "200px";
-}
-</script>
+  <script>
+    function toggleSidebar() {
+      const sidebar = document.getElementById("mySidebar");
+      sidebar.style.width = sidebar.style.width === "200px" ? "0" : "200px";
+    }
+  </script>
 
 </body>
 </html>
