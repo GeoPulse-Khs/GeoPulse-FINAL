@@ -8,11 +8,7 @@
     #history table { width: 100%; border-collapse: collapse; margin-top: 20px; }
     #history th, #history td { border: 1px solid #ccc; padding: 8px; text-align: center; }
     #history th { background-color: #f4f4f4; }
-    #map { height: 300px; margin-top: 20px; }
-    #weather { margin-top: 20px; }
   </style>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 </head>
@@ -38,25 +34,7 @@
     </table>
   </div>
 
-  <!-- Map -->
-  <div id="map"></div>
-
-  <!-- Weather -->
-  <div id="weather">
-    <h3>Weather</h3>
-    <div id="weather-time"></div>
-    <div id="weather-temp"></div>
-    <div id="weather-desc"></div>
-    <img id="weather-icon" alt="Weather Icon"/>
-  </div>
-
   <script>
-    // Sidebar toggle
-    function toggleSidebar() {
-      const sidebar = document.getElementById("mySidebar");
-      sidebar.style.width = sidebar.style.width === "200px" ? "0" : "200px";
-    }
-
     // Firebase init
     const firebaseConfig = {
       apiKey: "AIzaSyBPkCOrLoVuStEvhzWQeCkm3QdD7MK3syI",
@@ -87,7 +65,7 @@
       `;
 
       tbody.appendChild(row);
-      // No deletion — keeps readings indefinitely
+      // Keeps readings indefinitely (no deletion)
     }
 
     // Firebase listeners for live updates
@@ -98,56 +76,6 @@
       db.ref(ref).on("value", snap => {
         sensorValues[ref] = snap.val();
         addHistoryRow(sensorValues);
-      });
-    });
-
-    // Map
-    const khs = [14.56791, 121.06327];
-    const map = L.map('map').setView(khs, 18);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-    L.marker(khs).addTo(map).bindPopup("<b>Kapitolyo High School</b><br>San Ignacio St, Pasig").openPopup();
-
-    // Clock
-    let weatherTimezoneOffsetSec = 8 * 3600;
-    function updateClock() {
-      const d = new Date(Date.now() + (weatherTimezoneOffsetSec * 1000));
-      const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-      const dayName = days[d.getUTCDay()];
-      const hour = d.getUTCHours();
-      const minute = d.getUTCMinutes().toString().padStart(2, '0');
-      const ampm = hour >= 12 ? 'pm' : 'am';
-      const hour12 = hour % 12 === 0 ? 12 : hour % 12;
-      document.getElementById('weather-time').textContent = `${dayName}, ${hour12}:${minute} ${ampm}`;
-    }
-    updateClock(); setInterval(updateClock, 1000);
-
-    // Weather
-    async function updateWeather() {
-      const apiKey = "349c731b1225933394747835a8e6b103";
-      const lat = 14.56791, lon = 121.06327;
-      try {
-        const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`);
-        const data = await res.json();
-        document.getElementById("weather-temp").textContent = `${Math.round(data.main.temp)}°C`;
-        document.getElementById("weather-desc").innerHTML = `${data.weather[0].description}<br>Feels like ${Math.round(data.main.feels_like)}°<br>Pasig`;
-        document.getElementById("weather-icon").src = `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
-        if (typeof data.timezone === "number") weatherTimezoneOffsetSec = data.timezone;
-      } catch(e) { console.error("Weather error:", e); }
-    }
-    updateWeather(); setInterval(updateWeather, 600000);
-
-    // Logout
-    document.addEventListener("DOMContentLoaded", () => {
-      const btn = document.getElementById("logout-btn");
-      if (!btn) return;
-      btn.addEventListener("click", (e) => {
-        e.preventDefault();
-        try { document.getElementById("mySidebar").style.width = "0"; } catch {}
-        try { if (window.firebase && firebase.database) firebase.database().ref().off(); } catch {}
-        try { localStorage.clear(); sessionStorage.clear(); } catch {}
-        window.location.replace("index.html");
       });
     });
   </script>
