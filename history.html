@@ -19,7 +19,9 @@
     <thead>
       <tr>
         <th>Timestamp</th>
-        <th>Gyro</th>
+        <th>Roll</th>
+        <th>Pitch</th>
+        <th>Yaw</th>
         <th>Moisture</th>
         <th>Rainfall</th>
         <th>Vibration</th>
@@ -43,9 +45,11 @@
     const db = firebase.database();
 
     // Function to store one full set of sensor readings
-    function logSensorSet(gyro, moisture, rainfall, vibration) {
+    function logSensorSet(roll, pitch, yaw, moisture, rainfall, vibration) {
       db.ref("logs").push({
-        gyro: gyro,
+        roll: roll,
+        pitch: pitch,
+        yaw: yaw,
         moisture: moisture,
         rainfall: rainfall,
         vibration: vibration,
@@ -56,16 +60,18 @@
     // Listen for new sensor sets and update table
     db.ref("logs").on("child_added", snap => {
       const data = snap.val();
-      addRow(data.timestamp, data.gyro, data.moisture, data.rainfall, data.vibration);
+      addRow(data.timestamp, data.roll, data.pitch, data.yaw, data.moisture, data.rainfall, data.vibration);
     });
 
     // Add a row to the table
-    function addRow(timestamp, gyro, moisture, rainfall, vibration) {
+    function addRow(timestamp, roll, pitch, yaw, moisture, rainfall, vibration) {
       const tbody = document.getElementById("sensorTable").querySelector("tbody");
       const row = document.createElement("tr");
       row.innerHTML = `
         <td>${timestamp}</td>
-        <td>${gyro}</td>
+        <td>${roll}</td>
+        <td>${pitch}</td>
+        <td>${yaw}</td>
         <td>${moisture}</td>
         <td>${rainfall}</td>
         <td>${vibration}</td>
@@ -76,10 +82,12 @@
     // Example: simulate storing new sensor readings every 5 seconds
     setInterval(() => {
       logSensorSet(
-        (Math.random() * 360).toFixed(2), // Gyro
-        (Math.random() * 100).toFixed(2), // Moisture
-        (Math.random() * 50).toFixed(2),  // Rainfall
-        (Math.random() * 10).toFixed(2)   // Vibration
+        (Math.random() * 180 - 90).toFixed(2), // Roll (-90 to +90)
+        (Math.random() * 180 - 90).toFixed(2), // Pitch (-90 to +90)
+        (Math.random() * 360).toFixed(2),      // Yaw (0 to 360)
+        (Math.random() * 100).toFixed(2),      // Moisture
+        (Math.random() * 50).toFixed(2),       // Rainfall
+        (Math.random() * 10).toFixed(2)        // Vibration
       );
     }, 5000);
   </script>
