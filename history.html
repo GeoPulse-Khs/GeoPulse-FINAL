@@ -19,9 +19,11 @@
   <table id="sensorTable">
     <thead>
       <tr>
-        <th>Sensor</th>
-        <th>Value</th>
         <th>Timestamp</th>
+        <th>Gyro</th>
+        <th>Moisture</th>
+        <th>Rainfall</th>
+        <th>Vibration</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -41,37 +43,45 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Function to store sensor data with timestamp
-    function logSensorData(sensorName, value) {
-      db.ref(`logs/${sensorName}`).push({
-        value: value,
+    // Function to store one full set of sensor readings
+    function logSensorSet(gyro, moisture, rainfall, vibration) {
+      db.ref("logs").push({
+        gyro: gyro,
+        moisture: moisture,
+        rainfall: rainfall,
+        vibration: vibration,
         timestamp: new Date().toISOString()
       });
     }
 
-    // Listen for new data and update table
-    const sensors = ["Vibration", "Moisture", "Yaw", "Rainfall"];
-    sensors.forEach(sensor => {
-      db.ref(`logs/${sensor}`).on("child_added", snap => {
-        const data = snap.val();
-        addRow(sensor, data.value, data.timestamp);
-      });
+    // Listen for new sensor sets and update table
+    db.ref("logs").on("child_added", snap => {
+      const data = snap.val();
+      addRow(data.timestamp, data.gyro, data.moisture, data.rainfall, data.vibration);
     });
 
     // Add a row to the table
-    function addRow(sensor, value, timestamp) {
+    function addRow(timestamp, gyro, moisture, rainfall, vibration) {
       const tbody = document.getElementById("sensorTable").querySelector("tbody");
       const row = document.createElement("tr");
-      row.innerHTML = `<td>${sensor}</td><td>${value}</td><td>${timestamp}</td>`;
+      row.innerHTML = `
+        <td>${timestamp}</td>
+        <td>${gyro}</td>
+        <td>${moisture}</td>
+        <td>${rainfall}</td>
+        <td>${vibration}</td>
+      `;
       tbody.appendChild(row);
     }
 
     // Example: simulate storing new sensor readings every 5 seconds
     setInterval(() => {
-      logSensorData("Vibration", (Math.random() * 10).toFixed(2));
-      logSensorData("Moisture", (Math.random() * 100).toFixed(2));
-      logSensorData("Yaw", (Math.random() * 360).toFixed(2));
-      logSensorData("Rainfall", (Math.random() * 50).toFixed(2));
+      logSensorSet(
+        (Math.random() * 360).toFixed(2), // Gyro
+        (Math.random() * 100).toFixed(2), // Moisture
+        (Math.random() * 50).toFixed(2),  // Rainfall
+        (Math.random() * 10).toFixed(2)   // Vibration
+      );
     }, 5000);
   </script>
 </body>
