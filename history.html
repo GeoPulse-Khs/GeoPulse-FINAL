@@ -1,82 +1,34 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF‑8">
-  <meta name="viewport" content="width=device‑width, initial-scale=1.0">
-  <title>Sensor History - GeoPulse</title>
+  <meta charset="UTF-8">
+  <title>Sensor Data Logger</title>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
   <style>
-    body {
-      margin: 0;
-      font-family: system-ui, Arial, sans-serif;
-      background: linear-gradient(to bottom, #1e3c72, #2a5298);
-      color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 20px;
-    }
-    h1 {
-      margin-bottom: 20px;
-    }
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      max-width: 900px;
-      background: white;
-      color: black;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 10px 14px;
-      text-align: center;
-    }
-    th {
-      background-color: #123456;
-      color: white;
-      font-weight: bold;
-    }
-    tr:nth-child(even) {
-      background-color: #f2f2f2;
-    }
-    .back-btn {
-      margin-top: 20px;
-      background: #123456;
-      color: white;
-      padding: 10px 18px;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    .back-btn:hover {
-      background: #0d2d44;
-    }
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background: #f4f4f4; }
   </style>
 </head>
 <body>
-  <h1>Sensor History</h1>
-  <table>
+  <h1>Sensor Data Logger</h1>
+
+  <!-- Table for displaying sensor data -->
+  <table id="sensorTable">
     <thead>
       <tr>
+        <th>Sensor</th>
+        <th>Value</th>
         <th>Timestamp</th>
-        <th>Vibration</th>
-        <th>Moisture</th>
-        <th>Gyro</th>
-        <th>Rainfall</th>
       </tr>
     </thead>
-    <tbody id="history-body">
-      <tr><td colspan="5">Loading data...</td></tr>
-    </tbody>
+    <tbody></tbody>
   </table>
-  <button class="back-btn" onclick="window.location.href='geopulse.html'">⬅ Back to Dashboard</button>
 
-  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
   <script>
+    // Firebase init
     const firebaseConfig = {
       apiKey: "AIzaSyBPkCOrLoVuStEvhzWQeCkm3QdD7MK3syI",
       authDomain: "iotdb-629a2.firebaseapp.com",
@@ -88,37 +40,39 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const tbody = document.getElementById("history-body");
 
-    function loadHistory() {
-      db.ref("History").on("value", snapshot => {
-        tbody.innerHTML = "";
-        const data = snapshot.val();
-        if (!data) {
-          tbody.innerHTML = `<tr><td colspan="5">No history available</td></tr>`;
-          return;
-        }
-        let rows = Object.entries(data)
-          .sort((a, b) => b[0].localeCompare(a[0]));  // descending by timestamp
-        // take only first 10
-        rows = rows.slice(0, 10);
-
-        rows.forEach(([timestamp, values]) => {
-          const row = `
-            <tr>
-              <td>${timestamp}</td>
-              <td>${values.Vibration ?? "--"}</td>
-              <td>${values.Moisture ?? "--"}</td>
-              <td>${values.Gyro ?? "--"}</td>
-              <td>${values.Rainfall ?? "--"}</td>
-            </tr>
-          `;
-          tbody.innerHTML += row;
-        });
+    // Function to store sensor data with timestamp
+    function logSensorData(sensorName, value) {
+      db.ref(`logs/${sensorName}`).push({
+        value: value,
+        timestamp: new Date().toISOString()
       });
     }
 
-    loadHistory();
+    // Listen for new data and update table
+    const sensors = ["Vibration", "Moisture", "Yaw", "Rainfall"];
+    sensors.forEach(sensor => {
+      db.ref(`logs/${sensor}`).on("child_added", snap => {
+        const data = snap.val();
+        addRow(sensor, data.value, data.timestamp);
+      });
+    });
+
+    // Add a row to the table
+    function addRow(sensor, value, timestamp) {
+      const tbody = document.getElementById("sensorTable").querySelector("tbody");
+      const row = document.createElement("tr");
+      row.innerHTML = `<td>${sensor}</td><td>${value}</td><td>${timestamp}</td>`;
+      tbody.appendChild(row);
+    }
+
+    // Example: simulate storing new sensor readings every 5 seconds
+    setInterval(() => {
+      logSensorData("Vibration", (Math.random() * 10).toFixed(2));
+      logSensorData("Moisture", (Math.random() * 100).toFixed(2));
+      logSensorData("Yaw", (Math.random() * 360).toFixed(2));
+      logSensorData("Rainfall", (Math.random() * 50).toFixed(2));
+    }, 5000);
   </script>
 </body>
 </html>
