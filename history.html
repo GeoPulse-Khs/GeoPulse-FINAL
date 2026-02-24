@@ -1,34 +1,54 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Sensor Data Logger</title>
-  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
+  <title>Sensor Dashboard</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-    th { background: #f4f4f4; }
+    #history table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    #history th, #history td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    #history th { background-color: #f4f4f4; }
+    #map { height: 300px; margin-top: 20px; }
+    #weather { margin-top: 20px; }
   </style>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 </head>
 <body>
-  <h1>Sensor Data Logger</h1>
+  <h2>Kapitolyo High School IoT Dashboard</h2>
 
-  <table id="sensorTable">
-    <thead>
-      <tr>
-        <th>Timestamp</th>
-        <th>Roll</th>
-        <th>Pitch</th>
-        <th>Yaw</th>
-        <th>Moisture</th>
-        <th>Rainfall</th>
-        <th>Vibration</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <!-- Sensor History -->
+  <div id="history">
+    <h3>Sensor History</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>Roll</th>
+          <th>Pitch</th>
+          <th>Yaw</th>
+          <th>Vibration</th>
+          <th>Moisture</th>
+          <th>Rainfall</th>
+        </tr>
+      </thead>
+      <tbody id="history-body"></tbody>
+    </table>
+  </div>
+
+  <!-- Map -->
+  <div id="map"></div>
+
+  <!-- Weather -->
+  <div id="weather">
+    <h3>Weather</h3>
+    <div id="weather-time"></div>
+    <div id="weather-temp"></div>
+    <div id="weather-desc"></div>
+    <img id="weather-icon" alt="Weather Icon"/>
+  </div>
 
   <script>
     // Firebase init
@@ -44,52 +64,77 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Function to store one full set of sensor readings
-    function logSensorSet(roll, pitch, yaw, moisture, rainfall, vibration) {
-      db.ref("logs").push({
-        roll: roll,
-        pitch: pitch,
-        yaw: yaw,
-        moisture: moisture,
-        rainfall: rainfall,
-        vibration: vibration,
-        timestamp: new Date().toISOString()
-      });
-    }
-
-    // Listen for new sensor sets and update table
-    db.ref("logs").on("child_added", snap => {
-      const data = snap.val();
-      addRow(data.timestamp, data.roll, data.pitch, data.yaw, data.moisture, data.rainfall, data.vibration);
-    });
-
-    // Add a row to the table
-    function addRow(timestamp, roll, pitch, yaw, moisture, rainfall, vibration) {
-      const tbody = document.getElementById("sensorTable").querySelector("tbody");
+    // Function to add new row to history
+    function addHistoryRow(values) {
+      const timestamp = new Date().toLocaleString(); // full date + time
+      const tbody = document.getElementById("history-body");
       const row = document.createElement("tr");
+
       row.innerHTML = `
         <td>${timestamp}</td>
-        <td>${roll}</td>
-        <td>${pitch}</td>
-        <td>${yaw}</td>
-        <td>${moisture}</td>
-        <td>${rainfall}</td>
-        <td>${vibration}</td>
+        <td>${values.Roll || 0}</td>
+        <td>${values.Pitch || 0}</td>
+        <td>${values.Yaw || 0}</td>
+        <td>${values.Vibration || 0}</td>
+        <td>${values.Moisture || 0}</td>
+        <td>${values.Rainfall || 0}</td>
       `;
+
       tbody.appendChild(row);
+
+      // Keep only last 20 rows
+      if (tbody.rows.length > 20) {
+        tbody.deleteRow(0);
+      }
     }
 
-    // Example: simulate storing new sensor readings every 5 seconds
-    setInterval(() => {
-      logSensorSet(
-        (Math.random() * 180 - 90).toFixed(2), // Roll (-90 to +90)
-        (Math.random() * 180 - 90).toFixed(2), // Pitch (-90 to +90)
-        (Math.random() * 360).toFixed(2),      // Yaw (0 to 360)
-        (Math.random() * 100).toFixed(2),      // Moisture
-        (Math.random() * 50).toFixed(2),       // Rainfall
-        (Math.random() * 10).toFixed(2)        // Vibration
-      );
-    }, 5000);
+    // Firebase listeners
+    const sensorRefs = ["Roll", "Pitch", "Yaw", "Vibration", "Moisture", "Rainfall"];
+    const sensorValues = {};
+
+    sensorRefs.forEach(ref => {
+      db.ref(ref).on("value", snap => {
+        sensorValues[ref] = snap.val();
+        addHistoryRow(sensorValues);
+      });
+    });
+
+    // Map
+    const khs = [14.56791, 121.06327];
+    const map = L.map('map').setView(khs, 18);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+    L.marker(khs).addTo(map).bindPopup("<b>Kapitolyo High School</b><br>San Ignacio St, Pasig").openPopup();
+
+    // Clock
+    let weatherTimezoneOffsetSec = 8 * 3600;
+    function updateClock() {
+      const d = new Date(Date.now() + (weatherTimezoneOffsetSec * 1000));
+      const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+      const dayName = days[d.getUTCDay()];
+      const hour = d.getUTCHours();
+      const minute = d.getUTCMinutes().toString().padStart(2, '0');
+      const ampm = hour >= 12 ? 'pm' : 'am';
+      const hour12 = hour % 12 === 0 ? 12 : hour % 12;
+      document.getElementById('weather-time').textContent = `${dayName}, ${hour12}:${minute} ${ampm}`;
+    }
+    updateClock(); setInterval(updateClock, 1000);
+
+    // Weather
+    async function updateWeather() {
+      const apiKey = "349c731b1225933394747835a8e6b103";
+      const lat = 14.56791, lon = 121.06327;
+      try {
+        const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`);
+        const data = await res.json();
+        document.getElementById("weather-temp").textContent = `${Math.round(data.main.temp)}°C`;
+        document.getElementById("weather-desc").innerHTML = `${data.weather[0].description}<br>Feels like ${Math.round(data.main.feels_like)}°<br>Pasig`;
+        document.getElementById("weather-icon").src = `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
+        if (typeof data.timezone === "number") weatherTimezoneOffsetSec = data.timezone;
+      } catch(e) { console.error("Weather error:", e); }
+    }
+    updateWeather(); setInterval(updateWeather, 600000);
   </script>
 </body>
 </html>
